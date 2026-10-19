@@ -12,6 +12,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Firebase SDKs (Compat Version) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -46,9 +50,7 @@
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-        }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-300">
@@ -67,7 +69,7 @@
                 <i class="fa-solid fa-lock"></i>
             </div>
             <h2 class="text-xl font-bold text-white mb-1">Sabab's Vault</h2>
-            <p class="text-xs text-slate-400 mb-6">Enter PIN to access your expenses</p>
+            <p class="text-xs text-slate-400 mb-6">Enter PIN to sync & unlock</p>
             
             <form onsubmit="verifyPin(event)" class="space-y-4">
                 <input type="password" id="pinInput" placeholder="••••" maxlength="8" autofocus required
@@ -81,15 +83,14 @@
         </div>
     </div>
 
-    <!-- MAIN APP CONTENT (Hidden until unlocked) -->
+    <!-- MAIN APP CONTENT -->
     <div id="appContent" class="max-w-6xl mx-auto px-4 py-6 md:py-10 hidden">
-        <!-- Header -->
         <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
             <div>
                 <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
                     Welcome back, <span class="text-teal-600 dark:text-teal-400">Sabab Mojumder</span>
                 </h1>
-                <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Track your daily and monthly expenses with ease.</p>
+                <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Real-time Cloud Sync Enabled ☁️</p>
             </div>
             <div class="flex items-center gap-3 self-end sm:self-auto">
                 <button onclick="lockApp()" title="Lock App" class="p-2.5 rounded-xl glass text-slate-600 dark:text-slate-300 hover:bg-white/80 dark:hover:bg-slate-800/80 transition-all shadow-sm">
@@ -138,12 +139,9 @@
             </div>
         </div>
 
-        <!-- Main Layout Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            
-            <!-- Left Column: Add Entry Form & Category Breakdown -->
             <div class="lg:col-span-5 space-y-6">
-                <!-- Log Expense Form -->
+                <!-- Add Form -->
                 <div class="glass p-6 rounded-2xl shadow-sm border border-white/40 dark:border-slate-800/60">
                     <h2 class="text-base font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                         <i class="fa-solid fa-plus text-teal-500"></i> Log Expense
@@ -151,7 +149,7 @@
                     <form id="expenseForm" class="space-y-4">
                         <div>
                             <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Title / Description</label>
-                            <input type="text" id="desc" required placeholder="e.g., Grocery Shopping, Bus Fare" class="w-full px-3.5 py-2.5 rounded-xl text-sm bg-white/70 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all">
+                            <input type="text" id="desc" required placeholder="e.g., Grocery Shopping" class="w-full px-3.5 py-2.5 rounded-xl text-sm bg-white/70 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all">
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
@@ -191,7 +189,6 @@
                     </form>
                 </div>
 
-                <!-- Category Breakdown Chart -->
                 <div class="glass p-6 rounded-2xl shadow-sm border border-white/40 dark:border-slate-800/60">
                     <h2 class="text-base font-semibold text-slate-900 dark:text-white mb-4">Spending Breakdown</h2>
                     <div class="relative flex items-center justify-center min-h-[220px]">
@@ -200,7 +197,6 @@
                 </div>
             </div>
 
-            <!-- Right Column: Transactions & History -->
             <div class="lg:col-span-7 space-y-6">
                 <div class="glass p-6 rounded-2xl shadow-sm border border-white/40 dark:border-slate-800/60">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
@@ -214,19 +210,47 @@
                         </div>
                     </div>
 
-                    <div id="expenseList" class="space-y-3 max-h-[500px] overflow-y-auto pr-1">
-                        <!-- Expenses injected dynamically -->
-                    </div>
+                    <div id="expenseList" class="space-y-3 max-h-[500px] overflow-y-auto pr-1"></div>
                 </div>
             </div>
-
         </div>
     </div>
 
     <script>
-        // Security / PIN setup
+        // --- YOUR FIREBASE CONFIG ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyAKWj-Tc_y4e5SBh5EwPhMrNgCLH0QqLu",
+            authDomain: "sabab-expense-tracker.firebaseapp.com",
+            projectId: "sabab-expense-tracker",
+            storageBucket: "sabab-expense-tracker.firebasestorage.app",
+            messagingSenderId: "495614199234",
+            appId: "1:495614199234:web:3d51f2e6c8f65ac9a3025b"
+        };
+
+        // Initialize Firebase & Firestore
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        let expenses = [];
+        let chart = null;
         let userPin = localStorage.getItem('sabab_pin') || '1234';
 
+        // --- REALTIME FIRESTORE LISTENER ---
+        function listenToFirestore() {
+            db.collection("expenses_sabab")
+              .orderBy("date", "desc")
+              .onSnapshot((snapshot) => {
+                  expenses = snapshot.docs.map(doc => ({
+                      id: doc.id,
+                      ...doc.data()
+                  }));
+                  render();
+              }, (error) => {
+                  console.error("Firestore Sync Error:", error);
+              });
+        }
+
+        // Lock & Authentication logic
         function verifyPin(e) {
             e.preventDefault();
             const input = document.getElementById('pinInput').value;
@@ -234,7 +258,7 @@
                 document.getElementById('lockScreen').classList.add('hidden');
                 document.getElementById('appContent').classList.remove('hidden');
                 document.getElementById('pinError').classList.add('hidden');
-                render();
+                listenToFirestore(); // Start real-time sync after unlock
             } else {
                 document.getElementById('pinError').classList.remove('hidden');
                 document.getElementById('pinInput').value = '';
@@ -250,27 +274,17 @@
         function changePinPrompt() {
             const current = prompt("Enter current PIN:");
             if (current === userPin) {
-                const newPin = prompt("Enter new PIN (numbers/letters):");
+                const newPin = prompt("Enter new PIN:");
                 if (newPin && newPin.trim() !== "") {
                     userPin = newPin.trim();
                     localStorage.setItem('sabab_pin', userPin);
-                    alert("PIN updated successfully!");
+                    alert("PIN updated!");
                 }
             } else if (current !== null) {
-                alert("Incorrect current PIN.");
+                alert("Incorrect PIN.");
             }
         }
 
-        // Data Store
-        let expenses = JSON.parse(localStorage.getItem('expenses_sabab')) || [
-            { id: 1, desc: 'Grocery Shopping', amount: 2450, category: 'Food', date: '2026-10-18', paymentMethod: 'Mobile Banking' },
-            { id: 2, desc: 'Internet Bill', amount: 1000, category: 'Bills', date: '2026-10-10', paymentMethod: 'Card' },
-            { id: 3, desc: 'Rickshaw & Bus Fare', amount: 180, category: 'Transport', date: '2026-10-19', paymentMethod: 'Cash' }
-        ];
-
-        let chart = null;
-
-        // Init App
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('date').valueAsDate = new Date();
             updateTheme();
@@ -292,8 +306,8 @@
             }
         }
 
-        // Form Submit
-        document.getElementById('expenseForm').addEventListener('submit', (e) => {
+        // Log Expense to Cloud
+        document.getElementById('expenseForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const desc = document.getElementById('desc').value;
             const amount = parseFloat(document.getElementById('amount').value);
@@ -301,35 +315,31 @@
             const date = document.getElementById('date').value;
             const paymentMethod = document.getElementById('paymentMethod').value;
 
-            const newExpense = {
-                id: Date.now(),
-                desc,
-                amount,
-                category,
-                date,
-                paymentMethod
-            };
-
-            expenses.unshift(newExpense);
-            saveData();
-            render();
-            document.getElementById('expenseForm').reset();
-            document.getElementById('date').valueAsDate = new Date();
+            try {
+                await db.collection("expenses_sabab").add({
+                    desc,
+                    amount,
+                    category,
+                    date,
+                    paymentMethod,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                document.getElementById('expenseForm').reset();
+                document.getElementById('date').valueAsDate = new Date();
+            } catch (err) {
+                alert("Failed to save entry: " + err.message);
+            }
         });
 
-        function saveData() {
-            localStorage.setItem('expenses_sabab', JSON.stringify(expenses));
+        async function deleteExpense(id) {
+            try {
+                await db.collection("expenses_sabab").doc(id).delete();
+            } catch (err) {
+                alert("Failed to delete: " + err.message);
+            }
         }
 
-        function deleteExpense(id) {
-            expenses = expenses.filter(item => item.id !== id);
-            saveData();
-            render();
-        }
-
-        function filterExpenses() {
-            renderList();
-        }
+        function filterExpenses() { renderList(); }
 
         function render() {
             renderStats();
@@ -392,13 +402,8 @@
             }
 
             const categoryIcons = {
-                Food: '🍕',
-                Transport: '🚗',
-                Bills: '🏠',
-                Shopping: '🛍️',
-                Entertainment: '🎬',
-                Health: '💊',
-                Other: '📦'
+                Food: '🍕', Transport: '🚗', Bills: '🏠', Shopping: '🛍️',
+                Entertainment: '🎬', Health: '💊', Other: '📦'
             };
 
             listEl.innerHTML = filtered.map(item => `
@@ -418,7 +423,7 @@
                     </div>
                     <div class="flex items-center gap-3">
                         <span class="text-sm font-bold text-slate-900 dark:text-white">৳${item.amount.toLocaleString('en-BD')}</span>
-                        <button onclick="deleteExpense(${item.id})" class="text-slate-400 hover:text-rose-500 transition-colors p-1">
+                        <button onclick="deleteExpense('${item.id}')" class="text-slate-400 hover:text-rose-500 transition-colors p-1">
                             <i class="fa-regular fa-trash-can text-xs"></i>
                         </button>
                     </div>
@@ -428,7 +433,6 @@
 
         function renderChart() {
             const ctx = document.getElementById('categoryChart').getContext('2d');
-            
             const categories = ['Food', 'Transport', 'Bills', 'Shopping', 'Entertainment', 'Health', 'Other'];
             const totals = categories.map(cat => {
                 return expenses
@@ -444,9 +448,7 @@
                     labels: categories,
                     datasets: [{
                         data: totals,
-                        backgroundColor: [
-                            '#14b8a6', '#6366f1', '#f59e0b', '#ec4899', '#8b5cf6', '#10b981', '#64748b'
-                        ],
+                        backgroundColor: ['#14b8a6', '#6366f1', '#f59e0b', '#ec4899', '#8b5cf6', '#10b981', '#64748b'],
                         borderWidth: 0
                     }]
                 },
