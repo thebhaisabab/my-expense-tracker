@@ -188,7 +188,7 @@
 
                 <!-- Category Breakdown Chart -->
                 <div class="glass-panel p-6 rounded-2xl shadow-sm">
-                    <h2 class="text-base font-semibold text-white mb-4">Spending Breakdown</h2>
+                    <h2 class="text-base font-semibold text-white mb-4">Category Distribution</h2>
                     <div class="relative flex items-center justify-center min-h-[220px]">
                         <canvas id="categoryChart"></canvas>
                     </div>
@@ -196,19 +196,71 @@
             </div>
 
             <div class="lg:col-span-7 space-y-6">
-                <!-- Transactions List -->
+                <!-- Transactions List & Filter Control Panel -->
                 <div class="glass-panel p-6 rounded-2xl shadow-sm">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
-                        <h2 class="text-base font-semibold text-white">Recent Transactions</h2>
-                        <div class="flex items-center gap-2 w-full sm:w-auto">
-                            <input type="text" id="searchInput" placeholder="Search..." onkeyup="filterExpenses()" class="w-full sm:w-40 px-3 py-1.5 rounded-lg text-xs bg-slate-900/80 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-teal-500">
-                            <select id="monthFilter" onchange="filterExpenses()" class="px-3 py-1.5 rounded-lg text-xs bg-slate-900/80 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-teal-500">
-                                <option value="all">All Time</option>
-                                <option value="current" selected>This Month</option>
+                    <!-- Quick Preset Period Tabs -->
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-800/80">
+                        <div class="flex flex-wrap items-center gap-1.5" id="presetButtons">
+                            <button onclick="setQuickFilter('month')" id="btnFilterMonth" class="px-3 py-1.5 text-xs font-medium rounded-xl bg-teal-600 text-white shadow-sm transition-all">This Month</button>
+                            <button onclick="setQuickFilter('year')" id="btnFilterYear" class="px-3 py-1.5 text-xs font-medium rounded-xl bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800 transition-all">This Year</button>
+                            <button onclick="setQuickFilter('lastMonth')" id="btnFilterLastMonth" class="px-3 py-1.5 text-xs font-medium rounded-xl bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800 transition-all">Last Month</button>
+                            <button onclick="setQuickFilter('today')" id="btnFilterToday" class="px-3 py-1.5 text-xs font-medium rounded-xl bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800 transition-all">Today</button>
+                            <button onclick="setQuickFilter('all')" id="btnFilterAll" class="px-3 py-1.5 text-xs font-medium rounded-xl bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800 transition-all">All Time</button>
+                        </div>
+                        <div id="filterTotalBadge" class="text-xs font-bold text-teal-400 bg-teal-950/60 border border-teal-800/50 px-2.5 py-1 rounded-lg">
+                            Total: ৳0
+                        </div>
+                    </div>
+
+                    <!-- Detailed Custom Filter Bar -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+                        <div>
+                            <label class="block text-[10px] font-medium text-slate-400 mb-1">Search</label>
+                            <input type="text" id="searchInput" placeholder="Search..." onkeyup="filterExpenses()" class="w-full px-2.5 py-1.5 rounded-lg text-xs bg-slate-900/80 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-teal-500">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-medium text-slate-400 mb-1">Month</label>
+                            <select id="selectMonth" onchange="applyCustomDropdowns()" class="w-full px-2.5 py-1.5 rounded-lg text-xs bg-slate-900/80 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-teal-500">
+                                <option value="all">All Months</option>
+                                <option value="0">January</option>
+                                <option value="1">February</option>
+                                <option value="2">March</option>
+                                <option value="3">April</option>
+                                <option value="4">May</option>
+                                <option value="5">June</option>
+                                <option value="6">July</option>
+                                <option value="7">August</option>
+                                <option value="8">September</option>
+                                <option value="9">October</option>
+                                <option value="10">November</option>
+                                <option value="11">December</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-medium text-slate-400 mb-1">Year</label>
+                            <select id="selectYear" onchange="applyCustomDropdowns()" class="w-full px-2.5 py-1.5 rounded-lg text-xs bg-slate-900/80 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-teal-500">
+                                <option value="all">All Years</option>
+                                <option value="2025">2025</option>
+                                <option value="2026" selected>2026</option>
+                                <option value="2027">2027</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-medium text-slate-400 mb-1">Category</label>
+                            <select id="selectCat" onchange="filterExpenses()" class="w-full px-2.5 py-1.5 rounded-lg text-xs bg-slate-900/80 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-teal-500">
+                                <option value="all">All Categories</option>
+                                <option value="Food">🍕 Food</option>
+                                <option value="Transport">🚗 Transport</option>
+                                <option value="Bills">🏠 Bills</option>
+                                <option value="Shopping">🛍️ Shopping</option>
+                                <option value="Entertainment">🎬 Entertainment</option>
+                                <option value="Health">💊 Health</option>
+                                <option value="Other">📦 Other</option>
                             </select>
                         </div>
                     </div>
 
+                    <!-- Transactions List -->
                     <div id="expenseList" class="space-y-3 max-h-[380px] overflow-y-auto pr-1"></div>
                 </div>
 
@@ -248,6 +300,7 @@
         let categoryChart = null;
         let trendChart = null;
         let currentTrendMode = 'daily';
+        let currentPresetFilter = 'month';
 
         function getSavedPin() {
             return localStorage.getItem('sabab_pin') || '1234';
@@ -393,7 +446,59 @@
             }
         }
 
-        function filterExpenses() { renderList(); }
+        // --- FILTER CONTROL LOGIC ---
+        function setQuickFilter(mode) {
+            currentPresetFilter = mode;
+            const now = new Date();
+            
+            // Highlight selected preset tab
+            const btnIds = {
+                month: 'btnFilterMonth',
+                year: 'btnFilterYear',
+                lastMonth: 'btnFilterLastMonth',
+                today: 'btnFilterToday',
+                all: 'btnFilterAll'
+            };
+
+            Object.keys(btnIds).forEach(key => {
+                const btn = document.getElementById(btnIds[key]);
+                if (key === mode) {
+                    btn.className = "px-3 py-1.5 text-xs font-medium rounded-xl bg-teal-600 text-white shadow-sm transition-all";
+                } else {
+                    btn.className = "px-3 py-1.5 text-xs font-medium rounded-xl bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800 transition-all";
+                }
+            });
+
+            // Update dropdown selects to reflect preset mode
+            if (mode === 'month') {
+                document.getElementById('selectMonth').value = now.getMonth();
+                document.getElementById('selectYear').value = now.getFullYear();
+            } else if (mode === 'year') {
+                document.getElementById('selectMonth').value = 'all';
+                document.getElementById('selectYear').value = now.getFullYear();
+            } else if (mode === 'lastMonth') {
+                const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                document.getElementById('selectMonth').value = lastMonthDate.getMonth();
+                document.getElementById('selectYear').value = lastMonthDate.getFullYear();
+            } else if (mode === 'all') {
+                document.getElementById('selectMonth').value = 'all';
+                document.getElementById('selectYear').value = 'all';
+            } else if (mode === 'today') {
+                document.getElementById('selectMonth').value = now.getMonth();
+                document.getElementById('selectYear').value = now.getFullYear();
+            }
+
+            filterExpenses();
+        }
+
+        function applyCustomDropdowns() {
+            currentPresetFilter = 'custom';
+            const btnIds = ['btnFilterMonth', 'btnFilterYear', 'btnFilterLastMonth', 'btnFilterToday', 'btnFilterAll'];
+            btnIds.forEach(id => {
+                document.getElementById(id).className = "px-3 py-1.5 text-xs font-medium rounded-xl bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800 transition-all";
+            });
+            filterExpenses();
+        }
 
         function switchTrendView(mode) {
             currentTrendMode = mode;
@@ -409,7 +514,7 @@
 
         function render() {
             renderStats();
-            renderList();
+            filterExpenses();
             renderCategoryChart();
             renderTrendChart();
         }
@@ -445,26 +550,51 @@
             document.getElementById('todayDate').innerText = todayStr;
         }
 
-        function renderList() {
+        function filterExpenses() {
             const listEl = document.getElementById('expenseList');
             const search = document.getElementById('searchInput').value.toLowerCase();
-            const filter = document.getElementById('monthFilter').value;
+            const selMonth = document.getElementById('selectMonth').value;
+            const selYear = document.getElementById('selectYear').value;
+            const selCat = document.getElementById('selectCat').value;
 
             const now = new Date();
-            const currentYear = now.getFullYear();
-            const currentMonth = now.getMonth();
+            const todayStr = now.toISOString().split('T')[0];
+
+            let totalFilteredSum = 0;
 
             const filtered = expenses.filter(e => {
+                const expDate = new Date(e.date);
                 const matchesSearch = e.desc.toLowerCase().includes(search) || e.category.toLowerCase().includes(search);
-                if (filter === 'current') {
-                    const expDate = new Date(e.date);
-                    return matchesSearch && expDate.getFullYear() === currentYear && expDate.getMonth() === currentMonth;
+                const matchesCat = (selCat === 'all' || e.category === selCat);
+
+                if (!matchesSearch || !matchesCat) return false;
+
+                // Check "Today" mode specifically
+                if (currentPresetFilter === 'today') {
+                    return e.date === todayStr;
                 }
-                return matchesSearch;
+
+                // Month Filter
+                if (selMonth !== 'all' && expDate.getMonth() !== parseInt(selMonth)) {
+                    return false;
+                }
+
+                // Year Filter
+                if (selYear !== 'all' && expDate.getFullYear() !== parseInt(selYear)) {
+                    return false;
+                }
+
+                return true;
             });
 
+            filtered.forEach(item => {
+                totalFilteredSum += item.amount;
+            });
+
+            document.getElementById('filterTotalBadge').innerText = `Total: ৳${totalFilteredSum.toLocaleString('en-BD')}`;
+
             if (filtered.length === 0) {
-                listEl.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">No expenses found.</div>`;
+                listEl.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">No expenses found for this selection.</div>`;
                 return;
             }
 
