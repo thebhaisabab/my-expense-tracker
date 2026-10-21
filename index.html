@@ -171,22 +171,32 @@
             </div>
         </div>
 
-        <!-- PEAK SPENDING RECORDS SEGMENT -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+        <!-- PEAK SPENDING RECORDS SEGMENT (3-Column Layout) -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
             <div class="glass-panel p-4 rounded-2xl flex items-center justify-between border-l-4 border-amber-500">
                 <div>
-                    <div class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Peak Spending Day (This Month)</div>
-                    <div class="text-lg font-bold text-white mt-0.5" id="peakDayDisplay">Loading...</div>
+                    <div class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Peak Day (This Month)</div>
+                    <div class="text-base font-bold text-white mt-0.5" id="peakDayDisplay">Loading...</div>
                 </div>
                 <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-lg">
                     <i class="fa-solid fa-fire"></i>
                 </div>
             </div>
 
+            <div class="glass-panel p-4 rounded-2xl flex items-center justify-between border-l-4 border-teal-500">
+                <div>
+                    <div class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Peak Day (This Year)</div>
+                    <div class="text-base font-bold text-white mt-0.5" id="peakYearDayDisplay">Loading...</div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-calendar-star"></i>
+                </div>
+            </div>
+
             <div class="glass-panel p-4 rounded-2xl flex items-center justify-between border-l-4 border-indigo-500">
                 <div>
-                    <div class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Peak Spending Month (This Year)</div>
-                    <div class="text-lg font-bold text-white mt-0.5" id="peakMonthDisplay">Loading...</div>
+                    <div class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Peak Month (This Year)</div>
+                    <div class="text-base font-bold text-white mt-0.5" id="peakMonthDisplay">Loading...</div>
                 </div>
                 <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-lg">
                     <i class="fa-solid fa-chart-column"></i>
@@ -575,7 +585,7 @@
 
         function setQuickFilter(mode) {
             currentPresetFilter = mode;
-            document.getElementById('selectSpecificDate').value = ''; // clear specific date filter
+            document.getElementById('selectSpecificDate').value = '';
             const now = new Date();
             const btnIds = {
                 month: 'btnFilterMonth',
@@ -705,31 +715,55 @@
             const currentYear = now.getFullYear();
             const currentMonth = now.getMonth();
 
-            // 1. Find Peak Spending Day in Current Month
-            let dailyTotals = {};
+            // 1. Peak Spending Day in Current Month
+            let monthDailyTotals = {};
             expenses.forEach(e => {
                 const d = new Date(e.date);
                 if (d.getFullYear() === currentYear && d.getMonth() === currentMonth) {
-                    dailyTotals[e.date] = (dailyTotals[e.date] || 0) + e.amount;
+                    monthDailyTotals[e.date] = (monthDailyTotals[e.date] || 0) + e.amount;
                 }
             });
 
-            let peakDay = null;
-            let maxDaySpent = 0;
-            Object.keys(dailyTotals).forEach(dateStr => {
-                if (dailyTotals[dateStr] > maxDaySpent) {
-                    maxDaySpent = dailyTotals[dateStr];
-                    peakDay = dateStr;
+            let peakMonthDay = null;
+            let maxMonthDaySpent = 0;
+            Object.keys(monthDailyTotals).forEach(dateStr => {
+                if (monthDailyTotals[dateStr] > maxMonthDaySpent) {
+                    maxMonthDaySpent = monthDailyTotals[dateStr];
+                    peakMonthDay = dateStr;
                 }
             });
 
-            if (peakDay) {
-                document.getElementById('peakDayDisplay').innerText = `${peakDay} (৳${maxDaySpent.toLocaleString('en-BD')})`;
+            if (peakMonthDay) {
+                document.getElementById('peakDayDisplay').innerText = `${peakMonthDay} (৳${maxMonthDaySpent.toLocaleString('en-BD')})`;
             } else {
                 document.getElementById('peakDayDisplay').innerText = `No data this month`;
             }
 
-            // 2. Find Peak Spending Month in Current Year
+            // 2. Peak Spending Day in Current Year
+            let yearDailyTotals = {};
+            expenses.forEach(e => {
+                const d = new Date(e.date);
+                if (d.getFullYear() === currentYear) {
+                    yearDailyTotals[e.date] = (yearDailyTotals[e.date] || 0) + e.amount;
+                }
+            });
+
+            let peakYearDay = null;
+            let maxYearDaySpent = 0;
+            Object.keys(yearDailyTotals).forEach(dateStr => {
+                if (yearDailyTotals[dateStr] > maxYearDaySpent) {
+                    maxYearDaySpent = yearDailyTotals[dateStr];
+                    peakYearDay = dateStr;
+                }
+            });
+
+            if (peakYearDay) {
+                document.getElementById('peakYearDayDisplay').innerText = `${peakYearDay} (৳${maxYearDaySpent.toLocaleString('en-BD')})`;
+            } else {
+                document.getElementById('peakYearDayDisplay').innerText = `No data this year`;
+            }
+
+            // 3. Peak Spending Month in Current Year
             let monthlyTotals = {};
             expenses.forEach(e => {
                 const d = new Date(e.date);
@@ -773,7 +807,6 @@
 
                 if (!matchesSearch || !matchesCat) return false;
 
-                // If specific date is selected in filter
                 if (currentPresetFilter === 'specificDate' && specificDate) {
                     return e.date === specificDate;
                 }
