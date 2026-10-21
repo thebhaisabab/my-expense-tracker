@@ -171,6 +171,29 @@
             </div>
         </div>
 
+        <!-- PEAK SPENDING RECORDS SEGMENT -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+            <div class="glass-panel p-4 rounded-2xl flex items-center justify-between border-l-4 border-amber-500">
+                <div>
+                    <div class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Peak Spending Day (This Month)</div>
+                    <div class="text-lg font-bold text-white mt-0.5" id="peakDayDisplay">Loading...</div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-fire"></i>
+                </div>
+            </div>
+
+            <div class="glass-panel p-4 rounded-2xl flex items-center justify-between border-l-4 border-indigo-500">
+                <div>
+                    <div class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Peak Spending Month (This Year)</div>
+                    <div class="text-lg font-bold text-white mt-0.5" id="peakMonthDisplay">Loading...</div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-chart-column"></i>
+                </div>
+            </div>
+        </div>
+
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div class="lg:col-span-5 space-y-6">
                 <!-- Add/Edit Form -->
@@ -270,11 +293,15 @@
                         </div>
                     </div>
 
-                    <!-- Detailed Custom Filter Bar -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+                    <!-- Detailed Custom Filter Bar (Includes Specific Date Picker) -->
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-4">
                         <div>
                             <label class="block text-[10px] font-medium text-slate-400 mb-1">Search</label>
                             <input type="text" id="searchInput" placeholder="Search..." onkeyup="filterExpenses()" class="w-full px-2.5 py-1.5 rounded-lg text-xs bg-slate-900/80 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-teal-500">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-medium text-slate-400 mb-1">Specific Date</label>
+                            <input type="date" id="selectSpecificDate" onchange="applyDateFilter()" class="w-full px-2 py-1.5 rounded-lg text-xs bg-slate-900/80 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-teal-500">
                         </div>
                         <div>
                             <label class="block text-[10px] font-medium text-slate-400 mb-1">Month</label>
@@ -548,6 +575,7 @@
 
         function setQuickFilter(mode) {
             currentPresetFilter = mode;
+            document.getElementById('selectSpecificDate').value = ''; // clear specific date filter
             const now = new Date();
             const btnIds = {
                 month: 'btnFilterMonth',
@@ -589,6 +617,16 @@
 
         function applyCustomDropdowns() {
             currentPresetFilter = 'custom';
+            document.getElementById('selectSpecificDate').value = '';
+            const btnIds = ['btnFilterMonth', 'btnFilterYear', 'btnFilterLastMonth', 'btnFilterToday', 'btnFilterAll'];
+            btnIds.forEach(id => {
+                document.getElementById(id).className = "px-3 py-1.5 text-xs font-medium rounded-xl bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800 transition-all";
+            });
+            filterExpenses();
+        }
+
+        function applyDateFilter() {
+            currentPresetFilter = 'specificDate';
             const btnIds = ['btnFilterMonth', 'btnFilterYear', 'btnFilterLastMonth', 'btnFilterToday', 'btnFilterAll'];
             btnIds.forEach(id => {
                 document.getElementById(id).className = "px-3 py-1.5 text-xs font-medium rounded-xl bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800 transition-all";
@@ -625,6 +663,7 @@
 
         function render() {
             renderStats();
+            renderPeakStats();
             filterExpenses();
             renderCategoryChart();
             renderTrendChart();
@@ -661,15 +700,70 @@
             document.getElementById('todayDate').innerText = todayStr;
         }
 
+        function renderPeakStats() {
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth();
+
+            // 1. Find Peak Spending Day in Current Month
+            let dailyTotals = {};
+            expenses.forEach(e => {
+                const d = new Date(e.date);
+                if (d.getFullYear() === currentYear && d.getMonth() === currentMonth) {
+                    dailyTotals[e.date] = (dailyTotals[e.date] || 0) + e.amount;
+                }
+            });
+
+            let peakDay = null;
+            let maxDaySpent = 0;
+            Object.keys(dailyTotals).forEach(dateStr => {
+                if (dailyTotals[dateStr] > maxDaySpent) {
+                    maxDaySpent = dailyTotals[dateStr];
+                    peakDay = dateStr;
+                }
+            });
+
+            if (peakDay) {
+                document.getElementById('peakDayDisplay').innerText = `${peakDay} (৳${maxDaySpent.toLocaleString('en-BD')})`;
+            } else {
+                document.getElementById('peakDayDisplay').innerText = `No data this month`;
+            }
+
+            // 2. Find Peak Spending Month in Current Year
+            let monthlyTotals = {};
+            expenses.forEach(e => {
+                const d = new Date(e.date);
+                if (d.getFullYear() === currentYear) {
+                    const m = d.getMonth();
+                    monthlyTotals[m] = (monthlyTotals[m] || 0) + e.amount;
+                }
+            });
+
+            let peakMonthIdx = null;
+            let maxMonthSpent = 0;
+            Object.keys(monthlyTotals).forEach(m => {
+                if (monthlyTotals[m] > maxMonthSpent) {
+                    maxMonthSpent = monthlyTotals[m];
+                    peakMonthIdx = parseInt(m);
+                }
+            });
+
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            if (peakMonthIdx !== null) {
+                document.getElementById('peakMonthDisplay').innerText = `${monthNames[peakMonthIdx]} (৳${maxMonthSpent.toLocaleString('en-BD')})`;
+            } else {
+                document.getElementById('peakMonthDisplay').innerText = `No data this year`;
+            }
+        }
+
         function filterExpenses() {
             const listEl = document.getElementById('expenseList');
             const search = document.getElementById('searchInput').value.toLowerCase();
+            const specificDate = document.getElementById('selectSpecificDate').value;
             const selMonth = document.getElementById('selectMonth').value;
             const selYear = document.getElementById('selectYear').value;
             const selCat = document.getElementById('selectCat').value;
 
-            const now = new Date();
-            const todayStr = now.toISOString().split('T')[0];
             let totalFilteredSum = 0;
 
             const filtered = expenses.filter(e => {
@@ -679,7 +773,12 @@
 
                 if (!matchesSearch || !matchesCat) return false;
 
+                // If specific date is selected in filter
+                if (currentPresetFilter === 'specificDate' && specificDate) {
+                    return e.date === specificDate;
+                }
                 if (currentPresetFilter === 'today') {
+                    const todayStr = new Date().toISOString().split('T')[0];
                     return e.date === todayStr;
                 }
                 if (selMonth !== 'all' && expDate.getMonth() !== parseInt(selMonth)) {
